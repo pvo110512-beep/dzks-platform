@@ -338,39 +338,49 @@ function rCtrl(){
   const apps=getA();
   const gk=apps.filter(a=>a.perv_bo==='Да');
   const ds=apps.filter(a=>a.perv_bo==='Нет');
+
   function tls(list){
     const ok=list.filter(a=>['posted','control'].includes(a.status)||(!['rejected'].includes(a.status)&&(wds(a.date_gk)||0)<4)).length;
     const risk=list.filter(a=>a.status==='work'&&(wds(a.date_gk)||0)>=4&&(wds(a.date_gk)||0)<6).length;
     const over=list.filter(a=>a.status==='work'&&(wds(a.date_gk)||0)>=6).length;
     return{ok,risk,over};
   }
-  function appRow(a){const d=dli(a);return`<div class="cr ${d.cls}">
-    <div class="cr-num" style="font-size:13px;font-weight:700">${esc(a.num)}</div>
-    <div class="cr-ds" style="font-size:12px;color:#6b7280">${esc(a.num_ds)}</div>
-    <div class="cr-sub">${esc(a.pred_k||a.pred_ds||'—')}</div>
-    <div style="font-size:11px;color:#6b7280;min-width:80px;text-align:right">${esc(a.created_by_name.split(' ')[0])}</div>
-    ${bdg(d.l,d.t)}
-  </div>`;}
-  const gkS=tls(gk);const dsS=tls(ds);
+
+  function visibleList(list){
+    return list.filter(a=>{
+      const d=dli(a);
+      return d.t==='r'||d.t==='y';
+    });
+  }
+
+  function appRow(a){
+    const d=dli(a);
+    return`<div class="cr ${d.cls}">
+      <div class="cr-num" style="font-size:13px;font-weight:700">${esc(a.num)}</div>
+      <div class="cr-ds" style="font-size:12px;color:#6b7280">${esc(a.num_ds)}</div>
+      <div class="cr-sub">${esc(a.pred_k||a.pred_ds||'—')}</div>
+      <div style="font-size:11px;color:#6b7280;min-width:80px;text-align:right">${esc(a.created_by_name.split(' ')[0])}</div>
+      ${bdg(d.l,d.t)}
+    </div>`;
+  }
+
+  function block(title,list,emptyText){
+    const stats=tls(list);
+    const visible=visibleList(list);
+    return `<div style="margin-bottom:1.5rem">
+      <div class="sh"><div class="sh-title">${title} (${list.length})</div></div>
+      <div class="tl" style="margin-bottom:14px">
+        <div class="tlb tlr"><div class="tln">Просрочено</div><div class="tlv">${stats.over}</div></div>
+        <div class="tlb tly"><div class="tln">Риск срока</div><div class="tlv">${stats.risk}</div></div>
+        <div class="tlb tlg"><div class="tln">В срок / Готово</div><div class="tlv">${stats.ok}</div></div>
+      </div>
+      ${visible.length===0?`<div style="color:#9ca3af;font-size:13px;padding:.5rem 0">${emptyText}</div>`:visible.map(appRow).join('')}
+    </div>`;
+  }
+
   return`<div class="ph"><div><div class="pt">Контроль сроков</div><div class="ps">Дедлайн: 6 рабочих дней с даты регистрации ГК</div></div></div>
-  <div style="margin-bottom:1.5rem">
-    <div class="sh"><div class="sh-title">Первичные государственные контракты (${gk.length})</div></div>
-    <div class="tl" style="margin-bottom:14px">
-      <div class="tlb tlg"><div class="tln">В срок / Готово</div><div class="tlv">${gkS.ok}</div></div>
-      <div class="tlb tly"><div class="tln">Риск срока</div><div class="tlv">${gkS.risk}</div></div>
-      <div class="tlb tlr"><div class="tln">Просрочено</div><div class="tlv">${gkS.over}</div></div>
-    </div>
-    ${gk.length===0?'<div style="color:#9ca3af;font-size:13px;padding:.5rem 0">Нет заявок по первичным ГК</div>':gk.map(appRow).join('')}
-  </div>
-  <div>
-    <div class="sh"><div class="sh-title">Дополнительные соглашения (${ds.length})</div></div>
-    <div class="tl" style="margin-bottom:14px">
-      <div class="tlb tlg"><div class="tln">В срок / Готово</div><div class="tlv">${dsS.ok}</div></div>
-      <div class="tlb tly"><div class="tln">Риск срока</div><div class="tlv">${dsS.risk}</div></div>
-      <div class="tlb tlr"><div class="tln">Просрочено</div><div class="tlv">${dsS.over}</div></div>
-    </div>
-    ${ds.length===0?'<div style="color:#9ca3af;font-size:13px;padding:.5rem 0">Нет заявок по ДС</div>':ds.map(appRow).join('')}
-  </div>`;}
+    ${block('Первичные государственные контракты',gk,'Нет просроченных и рисковых заявок по первичным ГК')}
+    ${block('Дополнительные соглашения',ds,'Нет просроченных и рисковых заявок по ДС')}`;}
 
 // ── REGISTRY ──
 function rReg(){
